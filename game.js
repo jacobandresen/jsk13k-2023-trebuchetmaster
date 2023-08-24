@@ -14,21 +14,12 @@ async function main() {
   let trebuchet, isPlaying, entities;
   let { canvas, context } = init();
 
-  let mainText = Text({
-    text: 'Click to Play',
-    font: '154px Arial',
-    color: 'white',
-    x: canvas.width / 2,
-    y: canvas.height / 2 + 76,
-    anchor: {x: 0.5, y: 0.5}
-  });
-
   initInput();
+  startGame();    
+
 
   onInput(['down', 'south', 'enter', 'space'], handleInput);
   function handleInput() {
-    if (!isPlaying)
-      startGame();    
   }
 
   function startGame() {
@@ -43,14 +34,9 @@ async function main() {
   }
 
   function gameRender() {
-    if (isPlaying) {
+  //  if (isPlaying) {
       entities.map(entity => entity.render());
-      }
-
-    if (!trebuchet || !isPlaying) {
-      mainText.text = !isPlaying ? 'Click to Play' : 'Game Over';
-      mainText.render();
-    }
+  //    }
   }
 
   let loop = GameLoop({

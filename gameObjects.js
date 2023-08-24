@@ -5,7 +5,8 @@ import {
   gamepadAxis,
   keyPressed,
   pointerPressed,
-  getPointer
+  getPointer,
+  Sprite
 } from './kontra.mjs';
 import { roundRect } from './utils.js';
 
@@ -14,28 +15,8 @@ let usingKeyboard;
 export class Trebuchet extends SpriteClass {
   constructor(props) {
     let canvas = getCanvas();
-    let width = 231;
+    let width = 400;
     let height = 53;
-
-    // Trebuchet dimensions
-    // Arm Lengths
-    // Length of Sling
-    // Length of Weight
-    // Height of Pivot
-  
-    // Release Angle ?
-
-    // Constructive solid geometry: ( Spriteclass / Canvas )
-    // - long arm  : let largeArm = new Arm({x: this.x, y: this.y, length: 100});
-    // - short arm  : let smallArm = new Arm({x: this.x, y: this.y, length: 20});
-    // - pivot / pole
-    // - weight
-    // - sling
-    // - projectile
-  
-
-    // Trajectory equations ( in trebuchet update method )
-    // - Runge kutta
 
     super({
       ...props,
@@ -46,30 +27,15 @@ export class Trebuchet extends SpriteClass {
       anchor: { x: 0.5, y: 0.5 }
     });
 
-    this.position.clamp(width / 2, 0, canvas.width - width / 2, canvas.height);
+    this.position.clamp(0, 0, 0, 0);
   }
 
   draw() {
-
-    // Animations ( in trebuchet draw method )
-    // - Start
-    // - Transition 1
-    // - Transition 2
-
     let { width, height, color } = this;
-    roundRect(0, 0, width, height, 10, color);
+    roundRect(0, -100, width, height, 10, this.color);
   }
 
   update() {
-  
-    // Joints: (connect models in trebuchet class)
-    // - attach weight to small arm
-    // - attach sling to long arm (the sling should be nearly as long as  the long arm)
-    // - attach projectile to sling
-
-    // TODO: left-right = control string 
-    // TODO: up-down = control lever
-
     let pointer = getPointer();
     let axisX = gamepadAxis('leftstickx', 0);
     if (Math.abs(axisX) > 0.4) {
@@ -81,7 +47,7 @@ export class Trebuchet extends SpriteClass {
       usingKeyboard = 1;
     }
     else if (!usingKeyboard || pointerPressed('left')) {
-      // move to mouse/touch
+      // move to mouse/touch  
       this.x = pointer.x;
       usingKeyboard = 0;
     }
@@ -89,11 +55,6 @@ export class Trebuchet extends SpriteClass {
 };
 
 export class Arm extends SpriteClass {
-
-  // Uniform Arm ?
-  // Mass of Arm
-  // Inertia of Arm
-  // Pivot to Arm CG: https://virtualtrebuchet.com/documentation/inputs/arm/PivotToArmCG
 
   constructor(props) {
     let canvas = getCanvas();
@@ -104,7 +65,6 @@ export class Arm extends SpriteClass {
       type: 0,
       width,
       height,
-      length,
       color: '#fff',
       anchor: { x: 0.5, y: 0.5 }
     });
@@ -117,10 +77,7 @@ export class Arm extends SpriteClass {
   }
 };
 
-export class Weight extends SpriteClass {
-  // Mass of Weight
-  // Inertia of Weight
- 
+export class Weight extends SpriteClass { 
   constructor(props) {
     super({
       ...props,
@@ -156,23 +113,3 @@ export class Projectile extends SpriteClass {
     zzfx(...[,,1e3,,.03,.02,1,2,,,940,.03,,,,,.2,.6,,.06]);
   }
 }
-
-/*
-export class Ball extends SpriteClass {
-  constructor(props) {
-    super({
-      ...props,
-      dy: 15,
-      anchor: { x: 0.5, y: 0.5 },
-      radius: 30
-    });
-  }
-
-  draw() {
-    let { context, radius } = this;
-    context.fillStyle = '#fff';
-    context.beginPath();
-    context.arc(0, 0, radius, 0, 2 * Math.PI);
-    context.fill();
-  }
-}*/

@@ -6,12 +6,9 @@ esbuild
     entryPoints: ['game.js'],
     bundle: true,
     outfile: 'game.dist.js',
+ //   sourcemap: true,
     watch: {
       onRebuild(error, result) {
-       /* if (error) console.error('watch build failed:', error)
-        else { 
-          console.log('watch build succeeded:', result)
-        }*/
       }
     },
     plugins: [

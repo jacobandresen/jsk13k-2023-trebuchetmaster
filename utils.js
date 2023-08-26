@@ -4,10 +4,6 @@ import {
   getWorldRect
 } from './kontra.mjs';
 
-///////////////////////////////////////////////////////////////////////////////
-/**
- * Draw a rounded rectangle
- */
 export function roundRect(x, y, w, h, r, color) {
   let context = getContext();
   context.fillStyle = color;
@@ -20,10 +16,6 @@ export function roundRect(x, y, w, h, r, color) {
   context.fill();
 }
 
-///////////////////////////////////////////////////////////////////////////////
-/**
- * Determine if a circle and a rectangle collide
- */
 export function circleRectCollision(circle, rect) {
   let { x, y, width, height } = getWorldRect(rect);
 
@@ -32,24 +24,10 @@ export function circleRectCollision(circle, rect) {
   return dx * dx + dy * dy < circle.radius * circle.radius;
 }
 
-///////////////////////////////////////////////////////////////////////////////
-/**
- * Return the angle of vector in radians
- */
 export function vectorAngle(vector) {
-  // atan returns the counter-clockwise angle in respect to the
-  // x-axis, but the canvas rotation system is based on the
-  // y-axis (rotation of 0 = up). so we need to add a quarter
-  // rotation to return a counter-clockwise rotation in respect
-  // to the y-axis
   return Math.atan2(vector.y, vector.x) + Math.PI / 2
 }
 
-///////////////////////////////////////////////////////////////////////////////
-/**
- * Get the side of the block that the ball hit
- * @see https://stackoverflow.com/a/19202228/2124254
- */
 export function getSideOfCollision(ball, block) {
   let rect = getWorldRect(block);
   let isAboveAC = isOnUpperSideOfLine(
@@ -65,21 +43,17 @@ export function getSideOfCollision(ball, block) {
 
   if (isAboveAC) {
     if (isAboveDB) {
-      //top edge has intersected
       return { x: 0, y: -1 };
     }
     else {
-      //right edge intersected
       return { x: 1, y: 0 };
     }
   }
   else {
     if (isAboveDB) {
-      //left edge has intersected
       return { x: -1, y: 0 };
     }
     else {
-      //bottom edge intersected
       return { x: 0, y: 1 };
     }
   }

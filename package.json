@@ -1,14 +1,18 @@
 {
   "name": "trebuchetmaster",
   "version": "1.0.0",
-  "description": "Trebuchet master",
+  "description": "Trebuchet master for JSK13K 2023",
   "scripts": {
-    "build": "node build.js"
+    "build": "node build.js",
+    "dev": "http-server"
   },
   "author": "Jacob Andresen",
   "devDependencies": {
     "esbuild": "^0.14.51",
     "esbuild-plugin-kontra": "^1.0.0",
     "js13k-packer": "^1.0.2"
+  },
+  "dependencies": {
+    "http-server": "^14.1.1"
   }
 }

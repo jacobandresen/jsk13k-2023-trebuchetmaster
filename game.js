@@ -20,7 +20,7 @@ async function main() {
   }
 
   function startGame() {
-    trebuchet = new Trebuchet({ x: 150 , y: canvas.height - 100 });
+    trebuchet = new Trebuchet({ x: 800 , y: canvas.height - 100 });
     entities = [trebuchet];
   }
 

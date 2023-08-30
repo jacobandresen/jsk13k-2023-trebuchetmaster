@@ -49,7 +49,6 @@ export class Trebuchet extends SpriteClass {
     this.position.clamp(0, 0, 0, 0);
     this.pole = new Pole({x: 0, y:0});
 
-
     // results
     // TODO: draw objects using in the correct positions using simulation results
     this.WeightCG = {
@@ -95,67 +94,83 @@ export class Trebuchet extends SpriteClass {
 /*
 // https://virtualtrebuchet.com/documentation/explanation/EquationsOfMotion
 
-let M11= -mP*LAl^2*(-1+2*SIN(Aq)*COS(Sq)/SIN(Aq+Sq)) + IA3 + IW3 + mA*LAcg^2 + mP*LAl^2*SIN(Aq)^2/SIN(Aq+Sq)^2 + mW*(LAs^2+LW^2+2*LAs*LW*COS(Wq))
+this.M11= -this.mP*(this.LAl**)2*(-1+2*math.sin(this.Aq)*math.cos(this.Sq)/math.sin(this.Aq+this.Sq))
+    + this.IA3 + this.IW3 + this.mA*(LAcg**2)
+    + this.mP*(this.LAl**2) * (math.sin(this.Aq)**2)/math.sin(this.Aq+this.Sq)^2
+    + this.mW*(this.LAs**2)
+    + this.LW**2
+    + 2 * this.LAs * this.LW * math.cos(this.Wq)
+    )
 
-let M12= IW3 + LW*mW*(LW+LAs*COS(Wq))
+this.M12= this.IW3 + this.LW * this.mW * (this.LW +this.LAs*math.cos(Wq))
 
-let M21= IW3 + LW*mW*(LW+LAs*COS(Wq))
+this.M21= this.IW3 + this.LW * mW * (this.LW + this.LAs * math.cos(Wq))
 
-let M22= IW3 + mW*LW^2
+this.M22= this.IW3 + this.mW*this.LW**2
 
-let r1= Grav*LAcg*mA*SIN(Aq) + LAl*LS*mP*(SIN(Sq)*(Aw+Sw)^2+COS(Sq)*(COS(Aq+Sq)*Sw*(Sw+2*Aw)/SIN(Aq+Sq)+(COS(Aq+Sq)/SIN(Aq+Sq)+LAl*COS(Aq)/(LS*SIN(Aq+Sq)))*Aw^2)) + LAl*mP*SIN(Aq)*(LAl*SIN(Sq)*Aw^2-LS*(COS(Aq+Sq)*Sw*(Sw+2*Aw)/SIN(Aq+Sq)+(COS(Aq+Sq)/SIN(Aq+Sq)+LAl*COS(Aq)/(LS*SIN(Aq+Sq)))*Aw^2))/SIN(Aq+Sq) - Grav*mW*(LAs*SIN(Aq)+LW*SIN(Aq+Wq)) - LAs*LW*mW*SIN(Wq)*(Aw^2-(Aw+Ww)^2)
+this.r1= this.Grav * this.LAcg * this.mA * math.sin(Aq)
+     + this.LAl * this.LS * this.mP * (math.sin(Sq)*(this.Aw + this.Sw)**2
+      + math.cos(this.Sq)*(math.cos(this.Aq + this.Sq) * this.Sw*(this.Sw + 2*this.Aw)
+       /math.sin(this.Aq + this.Sq) + (this.COS(this.Aq + this.Sq)/math.sin(this.Aq + this.Sq)
+      +this.LAl*math.cos(this.Aq)/(this.LS*math.sin(this.Aq+this.Sq)))*this.Aw**2))
+      + this.LAl*this.mP*math.sin(this.Aq)*(this.LAl*math.sin(this.Sq)*this.Aw**2
+      - this.LS*(math.COS(this.Aq+this.Sq)*this.Sw*(this.Sw+2*this.Aw)/math.sin(this.Aq+this.Sq)
+      +(math.cos(this.Aq+this.Sq)/math.sin(this.Aq+this.Sq)
+      + this.LAl*math.COS(this.Aq)/(this.LS*mat.sin(this.Aq+this.Sq)))*this.Aw**2))
+      /math.sin(this.Aq+this.Sq) - this.Grav*this.mW*(this.LAs*math.sin(this.Aq)
+      +this.LW*math.sin(this.Aq+thisWq))
+      - this.LAs*this.LW*this.mW*math.sin(this.Wq)*(this.Aw**2-(this.Aw+this.Ww)**2);
 
-let r2= -LW*mW*(Grav*SIN(Aq+Wq)+LAs*SIN(Wq)*Aw^2)
+this.r2= -this.LW*this.mW*(this.Grav*math.sin(this.Aq+this.Wq)+this.LAs*maht.sin(this.Wq)*this.Aw**2);
 
-let Aw'= (r1*M22-r2*M12)/(M11*M22-M12*M21)
+this.Aw'= (this.r1*this.M22-this.r2*this.M12)/(this.M11*this.M22-this.M12*this.M21);
 
-let Ww'= -(r1*M21-r2*M11)/(M11*M22-M12*M21)
+this.Ww'= -(this.r1*this.M21-this.r2*this.M11)/(this.M11*this.M22-this.M12*this.M21);
 
 
-let Aq'= Aw
+this.Aq'= Aw;
 
-let Wq'= Ww
+this.Wq'= Ww;
 
-let Sq'= Sw
+this.Sq'= Sw;
 
-let Aw'= (r1*M22-r2*M12)/(M11*M22-M12*M21)
+this.Aw'= (this.r1*this.M22-this.r2*this.M12)/(this.M11*this.M22-this.M12*this.M21);
 
-let Ww'= -(r1*M21-r2*M11)/(M11*M22-M12*M21)
+this.Ww'= -(this.r1*this.M21-this.r2*this.M11)/(this.M11*this.M22-this.M12*this.M21);
 
-let Sw'= -COS(Aq+Sq)*Sq'*(Sq'+2*Aq')/SIN(Aq+Sq) - (COS(Aq+Sq)/SIN(Aq+Sq)+LAl*COS(Aq)/(LS*SIN(Aq+Sq)))*Aq'^2 - (LAl*SIN(Aq)+LS*SIN(Aq+Sq))*Aq''/(LS*SIN(Aq+Sq))
+this.Sw'= -math.cos(this.Aq+this.Sq)*this.Sq'*(this.Sq'+2*this.Aq')/math.sin(tihs.Aq+thisSq)
+  - (math.cos(this.Aq+this.Sq)/ math.sin(this.Aq+this.Sq)
+    +this.LAl*math.cos(this.Aq)/(this.LS*math.sin(this.Aq+this.Sq)))*this.Aq'**2
+    - (this.LAl*math.sin(this.Aq)+this.LS*math.sin(this.Aq+this.Sq))*this.Aq''
+    /(this.LS*math.sin(this.Aq+this.Sq));
 
 //https://virtualtrebuchet.com/documentation/explanation/AnglesToXY
 
 this.WeightCG = {
-
-X: LAs*SIN(Aq) + LW*SIN(Aq+Wq)
-,
-Y: -LAs*COS(Aq) - LW*COS(Aq+Wq)
+  X: this.LAs*math.SIN(this.Aq) + this.LW*math.SIN(this.Aq + this.Wq)  ,
+  Y: -this.LAs*math.COS(this.Aq) - this.LW*math.COS(this.Aq + this.Wq)
   };
 
-Weight/Arm Point:
+this.WeightArmPoint = {
+  X:  this.LAs*math.sin(Aq),  
+  Y: -this.LAs*math.cos(Aq)
+};
 
-X = LAs*SIN(Aq)
+this.ArmCG = {
+  X: -this.LAcg*math.sin(Aq),
+  Y: this.LAcg*math.cos(Aq)
+};
 
-Y = -LAs*COS(Aq)
 
-Arm CG:
+this.ArmSlingPoint = {
+   X: -this.LAl*math.sin(this.Aq),
+   Y: = this.LAl*math.cos(this.Aq)
+};
 
-X = -LAcg*SIN(Aq)
-
-Y = LAcg*COS(Aq)
-
-Arm/Sling Point:
-
-X = -LAl*SIN(Aq)
-
-Y = LAl*COS(Aq)
-
-Projectile:
-
-X = -LAl*SIN(Aq) - LS*SIN(Aq+Sq)
-
-Y = LAl*COS(Aq) + LS*COS(Aq+Sq)
+this.Projectile = {
+   X: -this.LAl*math.SIN(this.Aq) - this.LS*math.sin(this.Aq+this.Sq),
+   Y: this.LAl*math.COS(this.Aq) + this.LS*math.cosS(this.Aq+this.Sq)
+}
 
 */
   }

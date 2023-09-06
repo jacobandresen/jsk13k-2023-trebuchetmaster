@@ -33,7 +33,7 @@ async function main() {
     let rho = 600;              // density of arm (kg/m^3)
     let beta = -70*Math.PI/180; // hook angle
 
-    trebuchet = new Trebuchet({ m1, m2, L1, L2, w, t, h0, rho, beta });
+    trebuchet = new Trebuchet({ m1:m1, m2:m2, L1:L1, L2:L2, w:w, t:t, h0:h0, rho:rho, beta:beta });
   }
 
   function gameUpdate() {

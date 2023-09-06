@@ -13,6 +13,223 @@ let usingKeyboard;
 // original code from www.benchtophybrid.com
 // - ported for kontra.js
 
+export class Trebuchet extends SpriteClass {
+
+  constructor(props) {
+    super({...props});
+    this.cwt     = new CounterWeight({mass:this.m1, color:"#DDDDDD"});                     
+    this.proj    = new Ball({mass:this.m2, color:"#E93A90"});                             
+    this.arm     = new ArmFixed({L1: this.L1, L2: this.L2, w: this.w, t: this.t, rho: this.rho, beta: this.beta, color:"#AFF53D"});   
+    this.base    = new BaseFixed({h0: this.h0, color:"#9CA400"});                        
+    this.ground  = new GroundFlat({color:"#A93CD4"});                           
+   
+    this.g = 9.81;     
+    this.I = 0;       
+    this.deltaT = 0.001;
+
+    this.Results = {
+      sx0: 0, 
+      sy0: 0, 
+      vx0: 0,
+      vy0: 0,
+      v0:  0,
+      alpha: 0, 
+      tMax: 0,
+      xMin: 0,
+      xMax: 0,
+      yMin: 0,
+      yMax: 0,
+      range: 0,  
+      effE: 0,
+      effR: 0
+    };
+  }
+
+  render() {
+
+    this.cwt.x  =  this.arm.L1*Math.cos(-this.arm.theta);
+    this.cwt.y  =  this.arm.L1*Math.sin(-this.arm.theta);
+    this.proj.x = -this.arm.L2*Math.cos(-this.arm.theta);
+    this.proj.y = -this.arm.L2*Math.sin(-this.arm.theta);
+  
+    this.arm.render();
+    this.cwt.render(); 
+    this.proj.render();  
+  }
+
+  mass() {
+    this.arm.mass();
+    const L1 = this.arm.L1;
+    const L2 = this.arm.L2;
+    const Lb = this.arm.Lb;
+  
+    this.I = this.cwt.mass*L1*L1 + this.proj.mass*L2*L2 + this.arm.Ib + this.arm.mb*Lb*Lb;
+    this.m = this.cwt.mass*L1 - this.proj.mass*L2 - this.arm.mb*Lb;
+  }
+
+  update() { 
+    this.ground.y = this.base.h0;
+    this.arm.update();                
+    this.cwt.update(this.arm.L2); 
+    this.ground.update(this.arm.L2); 
+    this.proj.radius = 0.5*this.arm.w;
+  
+    if (this.base.h0 >= this.arm.L2) {
+      this.arm.theta = -89*Math.PI/180;
+    } else {
+      this.arm.theta = Math.asin(this.base.h0/this.arm.L2);
+    }
+    this.arm.theta0 = this.arm.theta;   
+    this.arm.thetadot = 0;
+  
+    this.ground.render(); 
+    this.base.render();  
+  }
+
+  launch() {
+    const L1  = this.arm.L1;            
+    const g   = this.g                 
+    const h0  = this.base.h0;           
+    const m1  = this.cwt.mass;          
+    const m2  = this.proj.mass;         
+
+    const theta0    = this.arm.theta;    
+    const thetadot0 = this.arm.thetadot;
+  
+    const H1 = L1*(1 + Math.sin(this.arm.theta0));           
+    const H2 = h0 - L2*Math.sin(theta0);                     
+    const Hstar = h0 + L2;                                  
+   
+    const vx0   =  L2 * thetadot0*Math.sin(theta0);                              
+    const vy0   = -L2 * thetadot0*Math.cos(theta0);                               
+    const v02   =  vx0*vx0 + vy0*vy0;                                             
+    const tMax  = (vy0/g)+Math.sqrt((vy0*vy0)/(g*g) + 2*H2/g);                   
+
+    const PE = (m1*H1 - m2*H2)*g;  
+    const KE = 0.5*m2*v02;        
+
+    const R      = Math.abs(vx0) * tMax;
+    const R0star = 2*PE/(m2*g);
+    const Rstar  = R0star*Math.sqrt(2*H2/R0star + 1); 
+    const RHstar = R0star*Math.sqrt(2*Hstar/R0star + 1); 
+
+    this.results.effE = KE/PE; 
+    this.results.effR = R/Rstar;
+    this.results.effH = R/RHstar; 
+  
+    this.results.H2   = H2;
+    this.results.vx0  = vx0;
+    this.results.vy0  = vy0;
+    this.results.tMax = tMax;
+    this.results.R    = R;
+
+//    this.plotProjectile();
+  }
+
+  plotProjectile() {
+
+    let ctx = getContext();
+    const H2    = this.results.H2;
+    const vx0   = this.results.vx0;
+    const vy0   = this.results.vy0;
+    const tMax  = this.results.tMax;
+
+    const g = this.g;                       
+    const deltaT = tMax / 100;             
+    const projectile  = new Ball({mass:0, color:"#D72D80"});   
+    projectile.radius = 10;    
+    let xMin = 0;
+    let xMax = vx0 * tMax;
+    if (vx0 <= 0) {
+      xMin = vx0 * tMax;
+      xMax = 0;
+    }
+    
+    let yMin = 0;
+    let yMax = (vy0*vy0)/(2*g) + H2;
+  
+    if (vy0 <= 0) {
+      yMax = H2; 
+    } 
+        
+    if (vx0 > 0) {
+      let x0 = 0;
+    } else {
+      let x0 = ctx.width; 
+    }
+    let y0 = ctx.height; 
+      
+    
+    if (ctx.height/(yMax - yMin) < ctx.width/(xMax - xMin)) { 
+      let scale = ctx.height/(yMax - yMin);
+    } else {
+      let scale = ctx.width/(xMax - xMin);
+    }
+
+    let t = 0;  
+    let me = this;
+    function drawFrame () {      
+      t += deltaT;
+
+      projectile.x = scale * (vx0 * t) + x0;
+      projectile.y = scale * (0.5*g*t*t - vy0*t - H2) + y0;
+      projectile.radius = 5;
+      projectile.draw(scale);            
+      
+      if (t < tMax - 0.9*deltaT) { 
+        ctx.beginPath();
+        ctx.arc(this.projectile.x + 80, this.projectile.y + 20, 2, 0, Math.PI * 2, true);
+        ctx.fillStyle = "#B7F15B";
+        ctx.fill();
+      } else {
+        clearInterval(handle);
+      }
+    }
+    let handle = setInterval(drawFrame, 2000*deltaT/tMax);
+ 
+  }
+};
+
+export class CounterWeight extends SpriteClass {
+  constructor(props) {
+    super({...props});
+    this.x = 0;
+    this.y = 0;
+    this.H = 0;   
+    
+    this.pivot = new Ball({mass:0,color:"#AAAAAA"});
+    this.pivot.x = 0;                    
+    this.pivot.y = 0;
+  }
+ 
+  render() {
+    let ctx = getContext();
+
+    ctx.translate(this.x,this.y);
+    ctx.lineWidth = 2;
+    ctx.fillStyle = this.color;
+    ctx.strokeStyle = "#000000";
+      
+    ctx.beginPath();            
+    ctx.moveTo(-0.11*this.H, 0.09*this.H);
+    ctx.lineTo( 0.11*this.H, 0.09*this.H);
+    ctx.lineTo( 0.06*this.H,-0.05*this.H);
+    ctx.lineTo(-0.06*this.H,-0.05*this.H);
+    ctx.closePath();
+    ctx.fill();
+    ctx.stroke();
+    this.pivot.render();       
+    ctx.restore(); 
+  }
+
+  update(H) {
+    this.H = H;
+    this.pivot.x = 0;
+    this.pivot.y = 0;
+    this.pivot.radius = 0.02*H;
+  }
+}
+
 export class Ball extends SpriteClass {
 
   constructor(props) {
@@ -24,12 +241,11 @@ export class Ball extends SpriteClass {
     this.radius = 0;      
   }
 
-  draw() {
+  render() {
     const ctx = getContext();
 
-    const scale = 1;
     ctx.translate(this.x,this.y);
-    ctx.lineWidth = 2/scale;
+    ctx.lineWidth = 2;
     ctx.fillStyle = this.color;
     ctx.strokeStyle = "#000000";
   
@@ -42,49 +258,6 @@ export class Ball extends SpriteClass {
   }
 }
 
-export class CounterWeight extends SpriteClass {
-  constructor(props) {
-    super({...props});
-    this.x = 0;
-    this.y = 0;
-    this.H = 0;   
-    
-    this.pivot = new Ball({mass:0,color:"#AAAAAA"});
-    this.pivot.x = 0;                    
-    this.pivot.y = 0;
-
-  }
- 
-  draw() {
-    let ctx = getContext();
-    let scale = 1;
-
-    ctx.translate(this.x,this.y);
-    ctx.lineWidth = 2/scale;
-    ctx.fillStyle = this.color;
-    ctx.strokeStyle = "#000000";
-      
-    ctx.beginPath();            
-    ctx.moveTo(-0.11*this.H, 0.09*this.H);
-    ctx.lineTo( 0.11*this.H, 0.09*this.H);
-    ctx.lineTo( 0.06*this.H,-0.05*this.H);
-    ctx.lineTo(-0.06*this.H,-0.05*this.H);
-    ctx.closePath();
-    ctx.fill();
-    ctx.stroke();
-    this.pivot.draw(scale);       
-    ctx.restore(); 
-  }
-
-  update(H) {
-    this.H = H;
-    this.pivot.x = 0;
-    this.pivot.y = 0;
-    this.pivot.radius = 0.02*H;
-  }
- 
-}
-
 export class Sling extends SpriteClass {
   constructor(props) {
     super({...props});
@@ -94,14 +267,14 @@ export class Sling extends SpriteClass {
     this.psidot = 0;
   }
 
-  draw (scale) {
+  render () {
     let ctx = getContext();
     ctx.save();
     ctx.translate(this.x, this.y);
     ctx.rotate(-this.psi);        
     ctx.strokeStyle = this.color;  
   
-    ctx.lineWidth = 3/scale;          
+    ctx.lineWidth = 3;          
     ctx.beginPath();
     ctx.moveTo(0,0);                
     ctx.lineTo(this.L,0);
@@ -110,17 +283,16 @@ export class Sling extends SpriteClass {
   }
 }
 
-
 export class Slot extends SpriteClass {
   constructor(props){
     super({props});
   }
 
-  draw(scale) {
+  render() {
     let ctx = getContext();
     ctx.translate(this.x, this.y);  
     ctx.rotate(-this.angle);         
-    ctx.lineWidth = 1/scale;
+    ctx.lineWidth = 1;
     ctx.strokeStyle = "#000000";
     
     ctx.beginPath();
@@ -148,13 +320,12 @@ export class GroundFlat extends SpriteClass  {
     this.w = 0;
   }
 
-  draw() {
+  render() {
     let ctx = getContext();
-    let scale = 1;
-
+   
     ctx.save();
     ctx.translate(this.x, this.y);
-    ctx.lineWidth = 2/scale;
+    ctx.lineWidth = 2;
     ctx.fillStyle = this.color;
     ctx.strokeStyle = "#000000";
     
@@ -170,44 +341,6 @@ export class GroundFlat extends SpriteClass  {
   update (H) {
     this.w = H;
     this.h = 0.07*H;
-  }
-}
-
-export class GroundRamp extends SpriteClass {
-  constructor(props) {
-    super({...props});
-    this.x = 0;          
-    this.y = 0;        
-    this.H = 0;           
-  }
-
-  draw (scale) {
-    let ctx = getContext();
-    ctx.save();
-    ctx.translate(this.x, this.y);
-    ctx.lineWidth = 2/scale; 
-    ctx.fillStyle = this.color;
-    ctx.strokeStyle = "#000000";  
-    
-    ctx.beginPath();    
-    ctx.moveTo(0,0);
-    ctx.lineTo(-1.0*this.H, -1.0*this.H*Math.tan(this.lambda));
-    ctx.lineTo(-1.0*this.H,  0.1*this.H);
-    ctx.lineTo( 0.2*this.H,  0.1*this.H);
-    ctx.lineTo( 0.2*this.H,  0);
-    ctx.closePath();
-    ctx.fill();                
-  
-    ctx.beginPath();          
-    ctx.moveTo(-1.0*this.H, -1.0*this.H*Math.tan(this.lambda));
-    ctx.lineTo(0,0);
-    ctx.lineTo(0.2*this.H,0);
-    ctx.stroke();
-    ctx.restore();
-  }
-
-  update(H) {
-    this.H = H;
   }
 }
 
@@ -229,14 +362,14 @@ export class ArmFixed extends SpriteClass{
     this.Ib = 0;  
   }
 
-  draw(scale) {
+  render() {
     let ctx = getContext();
 
     ctx.save();
     ctx.translate(this.x, this.y); 
     ctx.rotate(-this.theta);     
     
-    ctx.lineWidth = 2/scale;     
+    ctx.lineWidth = 2;     
     ctx.fillStyle = this.color;
     ctx.strokeStyle = "#000000"; 
           
@@ -253,8 +386,8 @@ export class ArmFixed extends SpriteClass{
     ctx.fill();             
     ctx.stroke();            
     
-    this.pivot1.draw(scale);   
-    this.pivot2.draw(scale); 
+    this.pivot1.render();   
+    this.pivot2.render(); 
     ctx.restore();
   }
 
@@ -312,62 +445,6 @@ export class ArmFixed extends SpriteClass{
   }
 }
 
-export class ArmFloating extends SpriteClass {
-  constructor(props) {
-    super({...props});
-    this.x = 0;    
-    this.y = 0;      
-    this.theta = 0;  
-    this.thetadot = 0;  
-    this.theta0 = 0;     
-    
-    this.slot = new Slot(); 
-    this.pivot = new Ball({mass:0,color:"#AAAAAA"}); 
-    this.pivot.x = -D;                        
-    this.pivot.y = 0; 
-  }
-
-  draw (scale) {
-    let ctx = getContext();
-    ctx.save();
-    ctx.translate(this.x,this.y);
-    ctx.rotate(-this.theta);
-  
-    ctx.lineWidth = 2/scale;        
-    ctx.fillStyle = this.color;
-    ctx.strokeStyle = "#000000"; 
-  
-    ctx.beginPath();              
-    ctx.rect(-this.L2,-this.w/2,this.L2+0.1*this.w,this.w);
-    ctx.closePath();        
-    ctx.fill();                     
-    ctx.stroke();                
-  
-    this.slot.draw(scale);    
-    this.pivot.draw(scale);
-  
-    ctx.restore(); 
-  }
-
-  update(){
-    this.pivot.x = -this.D;
-    this.pivot.y = 0;
-    this.pivot.radius = 0.1*this.w;
-    this.slot.L =  0.4*this.L2;
-    this.slot.W =  0.2*this.w;
-    this.slot.x = -0.9*this.L2; 
-    this.slot.y = 0;
-    this.slot.angle = 0;  
-  }
-
-  mass () {
-    const L2  = this.L2;
-    const w  = this.w;
-    const mb = this.rho * this.t * w * L2;
-    this.Ib = (mb/12)*(L2*L2 + w*w);
-  }
-}
-
 export class BaseFixed extends SpriteClass {
 
   constructor(props) {
@@ -378,11 +455,11 @@ export class BaseFixed extends SpriteClass {
     this.pivot  = new Ball({m:0, color:"#AAAAAA"});  
   }
 
-  draw(scale) {
+  render() {
     let ctx = getContext();
     ctx.save();
     ctx.translate(this.x, this.y);
-    ctx.lineWidth = 2/scale;
+    ctx.lineWidth = 2;
     ctx.fillStyle = this.color;
     ctx.strokeStyle = "#000000";
     
@@ -403,11 +480,9 @@ export class BaseFixed extends SpriteClass {
     ctx.closePath();
     ctx.fill(); 
     ctx.stroke();
-    ctx.restore();
-    
-    this.pivot.draw(scale); 
+    ctx.restore(); 
+    this.pivot.render(); 
   }
-
 }
 
 export class BaseCart extends SpriteClass {
@@ -418,20 +493,19 @@ export class BaseCart extends SpriteClass {
     this.x = 0;     
     this.y = 0;     
     this.spring = 0.001;  
-    this.pivot  = new Ball({mass: 0, color:"#AAAAAA"}); 
-    this.wheel1 = new Ball(0, "#555555"); 
-    this.wheel2 = new Ball(0, "#555555"); 
+    this.pivot  = new Ball({mass:0, color:"#AAAAAA"}); 
+    this.wheel1 = new Ball({mass:0, color:"#555555"}); 
+    this.wheel2 = new Ball({mass:0, color:"#555555"}); 
     
     this.xdot = 0;    
   }
 
-  draw (scale) {
+  render () {
     let ctx  = getContext();
 
     ctx.save();
-
     ctx.translate(this.x, this.y);
-    ctx.lineWidth = 2/scale;
+    ctx.lineWidth = 2;
     ctx.fillStyle = this.color;
     ctx.strokeStyle = "#000000";
     
@@ -463,151 +537,9 @@ export class BaseCart extends SpriteClass {
     ctx.fill();    
     ctx.stroke();               
   
-    this.pivot.draw(scale);  
-    this.wheel1.draw(scale);
-    this.wheel2.draw(scale);        
+    this.pivot.render();  
+    this.wheel1.render();
+    this.wheel2.render();        
     ctx.restore();
   }
 }
-
-export class BaseFloating extends SpriteClass {
-  constructor(props) {
-    super({...props});
-    this.x  = 0;
-    this.y  = 0; 
- 
-    this.slotV = new Slot();
-    this.slotH = new Slot();       
-    this.pivot = new Ball({mass:0,color:"#AAAAAA"}); 
-    this.pivot.x = - this.W;
-    this.pivot.y = - this.H;
-  }
-
-  draw(scale) {
-    let ctx = getContext();
-    ctx.save();
-    ctx.translate(this.x, this.y);
-    ctx.lineWidth = 2/scale;   
-    ctx.fillStyle = this.color;
-    ctx.strokeStyle = "#000000";
-   
-    ctx.beginPath();  
-    ctx.moveTo(         0.1*this.h0,                    0);
-    ctx.lineTo(         0.1*this.h0,        -1.05*this.h0);
-    ctx.lineTo(        -0.1*this.h0,        -1.05*this.h0);
-    ctx.lineTo(        -0.1*this.h0, -this.H-0.05*this.h0);
-    ctx.lineTo(-this.W-0.05*this.h0, -this.H-0.05*this.h0);
-    ctx.lineTo(-this.W-0.05*this.h0, -this.H+0.05*this.h0);
-    ctx.lineTo(        -0.1*this.h0, -this.H+0.05*this.h0);
-    ctx.lineTo(        -0.1*this.h0, -0.1*this.h0*Math.tan(this.lambda));
-    ctx.lineTo(-this.W-0.10*this.h0, -(this.W+0.1*this.h0)*Math.tan(this.lambda));
-    ctx.lineTo(-this.W-0.10*this.h0,         0.15*this.h0);
-    ctx.lineTo(          0.5*this.W,         0.15*this.h0);
-    ctx.lineTo(          0.5*this.W,                    0);
-    ctx.closePath();
-    ctx.fill();    
-    ctx.stroke();  
-  
-    this.slotV.draw(scale);
-    this.slotH.draw(scale); 
-    this.pivot.draw(scale);
-    
-    ctx.restore();
-
-  }
-
-  update () {
-    this.x = 0; 
-    this.y = 0;  
-    this.slotV.L =  0.90*this.h0;
-    this.slotV.W =  0.05*this.h0;
-    this.slotV.x =  0;
-    this.slotV.y = -0.05*this.h0;
-    this.slotV.angle = Math.PI/2;
-    this.slotH.L =  0.70*this.W;
-    this.slotH.W =  0.05*this.h0;
-    this.slotH.x = -0.85*this.W;
-    this.slotH.y = -this.H;
-    this.slotH.angle = 0;
-    this.pivot.x = -this.W;
-    this.pivot.y = -this.H;
-    this.pivot.radius = 0.02*this.W;
-    
-  }
-}
-
-
-export class Trebuchet extends SpriteClass {
-
-  constructor(props) {
-
-    super({...props});
-    this.cwt     = new CounterWeight({mass:this.m1, color:"#DDDDDD"});                     
-    this.proj    = new Ball({mass:this.m2, color:"#E93A90"});                             
-    this.arm     = new ArmFixed({L1: this.L1, L2: this.L2, 
-        w: this.w, t: this.t, rho: this.rho, beta: this.beta, color:"#AFF53D"});   
-    this.base    = new BaseFixed({h0: this.h0, color:"#9CA400"});                        
-    this.ground  = new GroundFlat({color:"#A93CD4"});                           
-   
-    this.g = 9.81;     
-    this.I = 0;       
-    this.deltaT = 0.001;
-  }
-
-  mass() {
-    this.arm.mass();
-    const L1 = this.arm.L1;
-    const L2 = this.arm.L2;
-    const Lb = this.arm.Lb;
-  
-    this.I = this.cwt.mass*L1*L1 + this.proj.mass*L2*L2 + this.arm.Ib + this.arm.mb*Lb*Lb;
-    this.m = this.cwt.mass*L1 - this.proj.mass*L2 - this.arm.mb*Lb;
-  }
-
-  draw() {
-  
-    this.cwt.x  =  this.arm.L1*Math.cos(-this.arm.theta);
-    this.cwt.y  =  this.arm.L1*Math.sin(-this.arm.theta);
-    this.proj.x = -this.arm.L2*Math.cos(-this.arm.theta);
-    this.proj.y = -this.arm.L2*Math.sin(-this.arm.theta);
-  
-    this.arm.draw(this.scale);
-    this.cwt.draw(this.scale); 
-    this.proj.draw(this.scale);  
-  }
-
-  update() {
-
-    // TODO: grab treb_can2 , treb_tx1, treb_ctx dimensions
-    this.scale = 0.8*treb_can2.height/(this.arm.L2 + this.base.h0); 
-    this.x0 = treb_can2.width/2; 
-    this.y0 = treb_can2.height - 120;
-  
-    this.ground.y = this.base.h0;
-    this.arm.update();                
-    this.cwt.update(this.arm.L2); 
-    this.ground.update(this.arm.L2); 
-    this.proj.radius = 0.5*this.arm.w;
-  
-    if (this.base.h0 >= this.arm.L2) {
-      this.arm.theta = -89*Math.PI/180;
-    } else {
-      this.arm.theta = Math.asin(this.base.h0/this.arm.L2);
-    }
-    this.arm.theta0 = this.arm.theta;   
-    this.arm.thetadot = 0;
-  
-    treb_ctx1.save();
-    treb_ctx1.translate(this.x0,this.y0);  
-    treb_ctx1.scale(this.scale,this.scale);
-    this.ground.draw(treb_ctx1,this.scale); 
-    treb_ctx1.restore();                    
-    
-    treb_ctx3.save();
-    treb_ctx3.translate(this.x0,this.y0);   
-    treb_ctx3.scale(this.scale,this.scale);
-    this.base.draw(treb_ctx3,this.scale);  
-    treb_ctx3.restore();                   
-  }
-};
-

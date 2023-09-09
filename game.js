@@ -23,6 +23,7 @@ async function main() {
   function startGame() {
     
     // 1DOF simulation from www.benchtophybrid.com (ported to kontra.js)
+    // TODO: control parameters using keyboard input
     let m1 = 10;                // mass of counterweight (kg)
     let m2 = 0.1;               // mass of projectile (kg)
     let L1 = 0.15;              // length from pivot to short end of arm (m)
@@ -34,6 +35,9 @@ async function main() {
     let beta = -70*Math.PI/180; // hook angle
 
     trebuchet = new Trebuchet({ m1:m1, m2:m2, L1:L1, L2:L2, w:w, t:t, h0:h0, rho:rho, beta:beta });
+
+    trebuchet.launch();
+
   }
 
   function gameUpdate() {
